@@ -7,9 +7,9 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/gd/toggl-tui/internal/api"
-	"github.com/gd/toggl-tui/internal/config"
-	"github.com/gd/toggl-tui/internal/ui/common"
+	"github.com/gdiab/toggl-tui/internal/api"
+	"github.com/gdiab/toggl-tui/internal/config"
+	"github.com/gdiab/toggl-tui/internal/ui/common"
 )
 
 type step int

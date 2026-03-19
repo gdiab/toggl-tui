@@ -1,6 +1,6 @@
 package common
 
-import "github.com/gd/toggl-tui/internal/api"
+import "github.com/gdiab/toggl-tui/internal/api"
 
 // Screen identifies which screen to display.
 type Screen int

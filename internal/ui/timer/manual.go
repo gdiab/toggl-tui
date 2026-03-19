@@ -8,8 +8,8 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/gd/toggl-tui/internal/api"
-	"github.com/gd/toggl-tui/internal/ui/common"
+	"github.com/gdiab/toggl-tui/internal/api"
+	"github.com/gdiab/toggl-tui/internal/ui/common"
 )
 
 const minFormHeight = 20

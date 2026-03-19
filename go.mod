@@ -1,4 +1,4 @@
-module github.com/gd/toggl-tui
+module github.com/gdiab/toggl-tui
 
 go 1.24.4
 

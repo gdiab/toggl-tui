@@ -4,12 +4,12 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/gd/toggl-tui/internal/api"
-	"github.com/gd/toggl-tui/internal/config"
-	"github.com/gd/toggl-tui/internal/ui/common"
-	"github.com/gd/toggl-tui/internal/ui/dashboard"
-	"github.com/gd/toggl-tui/internal/ui/setup"
-	"github.com/gd/toggl-tui/internal/ui/timer"
+	"github.com/gdiab/toggl-tui/internal/api"
+	"github.com/gdiab/toggl-tui/internal/config"
+	"github.com/gdiab/toggl-tui/internal/ui/common"
+	"github.com/gdiab/toggl-tui/internal/ui/dashboard"
+	"github.com/gdiab/toggl-tui/internal/ui/setup"
+	"github.com/gdiab/toggl-tui/internal/ui/timer"
 )
 
 // App is the root model that routes between screens.

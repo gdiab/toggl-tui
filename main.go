@@ -5,8 +5,8 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/gd/toggl-tui/internal/config"
-	"github.com/gd/toggl-tui/internal/ui"
+	"github.com/gdiab/toggl-tui/internal/config"
+	"github.com/gdiab/toggl-tui/internal/ui"
 )
 
 func main() {
