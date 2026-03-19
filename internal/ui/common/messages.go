@@ -10,6 +10,7 @@ const (
 	ScreenDashboard
 	ScreenStartTimer
 	ScreenManualEntry
+	ScreenDayDetail
 )
 
 // SwitchScreenMsg requests a screen transition.
@@ -59,3 +60,9 @@ type RefreshMsg struct{}
 
 // UpdateAvailableMsg carries an update notice (empty if up to date).
 type UpdateAvailableMsg struct{ Notice string }
+
+// ShowDayDetailMsg requests navigation to the day detail screen with pre-loaded data.
+type ShowDayDetailMsg struct {
+	Day      api.DaySummary
+	Projects map[int]api.Project
+}

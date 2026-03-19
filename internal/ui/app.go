@@ -8,6 +8,7 @@ import (
 	"github.com/gdiab/toggl-tui/internal/config"
 	"github.com/gdiab/toggl-tui/internal/ui/common"
 	"github.com/gdiab/toggl-tui/internal/ui/dashboard"
+	"github.com/gdiab/toggl-tui/internal/ui/daydetail"
 	"github.com/gdiab/toggl-tui/internal/ui/setup"
 	"github.com/gdiab/toggl-tui/internal/ui/timer"
 	"github.com/gdiab/toggl-tui/internal/update"
@@ -20,6 +21,7 @@ type App struct {
 	dashboard  dashboard.Model
 	startForm  timer.StartModel
 	manualForm timer.ManualModel
+	dayDetail  daydetail.Model
 	cfg        *config.Config
 	client     *api.Client
 	version    string
@@ -110,6 +112,11 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m, cmd := a.dashboard.Update(msg)
 		a.dashboard = m
 		return a, cmd
+
+	case common.ShowDayDetailMsg:
+		a.screen = common.ScreenDayDetail
+		a.dayDetail = daydetail.New(msg.Day, msg.Projects)
+		return a, a.dayDetail.Init()
 	}
 
 	// Route to active screen
@@ -131,6 +138,8 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.startForm, cmd = a.startForm.Update(msg)
 	case common.ScreenManualEntry:
 		a.manualForm, cmd = a.manualForm.Update(msg)
+	case common.ScreenDayDetail:
+		a.dayDetail, cmd = a.dayDetail.Update(msg)
 	}
 
 	return a, cmd
@@ -196,6 +205,8 @@ func (a App) View() string {
 		view = a.startForm.View()
 	case common.ScreenManualEntry:
 		view = a.manualForm.View()
+	case common.ScreenDayDetail:
+		view = a.dayDetail.View()
 	}
 
 	if a.errMsg != "" {
