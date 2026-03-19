@@ -67,6 +67,9 @@ func (c *Client) do(method, path string, body string) ([]byte, error) {
 		return nil, fmt.Errorf("read response: %w", err)
 	}
 
+	if resp.StatusCode == 402 {
+		return nil, fmt.Errorf("payment required — check your Toggl subscription")
+	}
 	if resp.StatusCode == 429 {
 		return nil, fmt.Errorf("rate limited — please wait a moment")
 	}

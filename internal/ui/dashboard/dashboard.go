@@ -261,7 +261,7 @@ func (m Model) tickCmd() tea.Cmd {
 }
 
 func (m Model) autoRefreshCmd() tea.Cmd {
-	return tea.Tick(60*time.Second, func(t time.Time) tea.Msg {
+	return tea.Tick(5*time.Minute, func(t time.Time) tea.Msg {
 		return common.RefreshMsg{}
 	})
 }
