@@ -95,13 +95,27 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 					m.editInput.Blur()
 				}
 			case "left", "h":
-				if m.editFocus == 1 && m.editProjIdx > -1 {
-					m.editProjIdx--
+				if m.editFocus == 1 {
+					if m.editProjIdx > -1 {
+						m.editProjIdx--
+					}
+					return m, nil
 				}
+				// Fall through to default for text input
+				var cmd tea.Cmd
+				m.editInput, cmd = m.editInput.Update(msg)
+				return m, cmd
 			case "right", "l":
-				if m.editFocus == 1 && m.editProjIdx < len(m.projectList)-1 {
-					m.editProjIdx++
+				if m.editFocus == 1 {
+					if m.editProjIdx < len(m.projectList)-1 {
+						m.editProjIdx++
+					}
+					return m, nil
 				}
+				// Fall through to default for text input
+				var cmd tea.Cmd
+				m.editInput, cmd = m.editInput.Update(msg)
+				return m, cmd
 			default:
 				if m.editFocus == 0 {
 					var cmd tea.Cmd
@@ -453,13 +467,14 @@ func (m Model) renderWithModal(dashView string) string {
 	}
 	innerWidth := modalWidth - 4 // account for border + padding
 
-	// Dynamically size the text input to fill the modal width
-	// Subtract 8: form field border (4) + form field padding (2) + text input prompt (2)
-	inputWidth := innerWidth - 8
-	if inputWidth < 20 {
-		inputWidth = 20
+	// Dynamically size the text input if not yet sized for this modal width
+	desiredWidth := innerWidth - 8 // form field border(4) + padding(2) + prompt(2)
+	if desiredWidth < 20 {
+		desiredWidth = 20
 	}
-	m.editInput.Width = inputWidth
+	if m.editInput.Width != desiredWidth {
+		m.editInput.Width = desiredWidth
+	}
 
 	// Build modal content
 	var mb strings.Builder
@@ -468,12 +483,14 @@ func (m Model) renderWithModal(dashView string) string {
 	mb.WriteString("\n\n")
 
 	// Description field
+	// Width for the form field border: innerWidth minus form field border (4) and padding (2)
+	fieldWidth := innerWidth - 6
 	mb.WriteString(common.FormLabelStyle.Render("Description"))
 	mb.WriteString("\n")
 	if m.editFocus == 0 {
-		mb.WriteString(common.FormFieldFocusedStyle.Render(m.editInput.View()))
+		mb.WriteString(common.FormFieldFocusedStyle.Width(fieldWidth).Render(m.editInput.View()))
 	} else {
-		mb.WriteString(common.FormFieldStyle.Render(m.editInput.View()))
+		mb.WriteString(common.FormFieldStyle.Width(fieldWidth).Render(m.editInput.View()))
 	}
 	mb.WriteString("\n\n")
 
