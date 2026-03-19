@@ -13,28 +13,30 @@ import (
 
 // StartModel is the start-timer form.
 type StartModel struct {
-	client      *api.Client
-	workspaceID int
-	descInput   textinput.Model
-	projects    []api.Project
-	projectIdx  int
-	focusIdx    int // 0=description, 1=project, 2=submit
-	err         string
+	client          *api.Client
+	workspaceID     int
+	descInput       textinput.Model
+	projects        []api.Project
+	projectIdx      int
+	focusIdx        int // 0=description, 1=project, 2=submit
+	err             string
+	hasRunningTimer bool
 }
 
 // NewStart creates a new start-timer form.
-func NewStart(client *api.Client, workspaceID int, projects []api.Project) StartModel {
+func NewStart(client *api.Client, workspaceID int, projects []api.Project, hasRunningTimer bool) StartModel {
 	ti := textinput.New()
 	ti.Placeholder = "What are you working on?"
 	ti.Focus()
 	ti.Width = 40
 
 	return StartModel{
-		client:      client,
-		workspaceID: workspaceID,
-		descInput:   ti,
-		projects:    projects,
-		projectIdx:  -1, // no project selected
+		client:          client,
+		workspaceID:     workspaceID,
+		descInput:       ti,
+		projects:        projects,
+		projectIdx:      -1, // no project selected
+		hasRunningTimer: hasRunningTimer,
 	}
 }
 
@@ -116,6 +118,11 @@ func (m StartModel) View() string {
 
 	b.WriteString(common.TitleStyle.Render("Start Timer"))
 	b.WriteString("\n\n")
+
+	if m.hasRunningTimer {
+		b.WriteString(common.WarningStyle.Render("This will stop your current timer"))
+		b.WriteString("\n\n")
+	}
 
 	// Description
 	label := common.FormLabelStyle.Render("Description")

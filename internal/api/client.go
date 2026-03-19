@@ -151,6 +151,24 @@ func (c *Client) CreateTimeEntry(workspaceID int, req CreateTimeEntryRequest) (T
 	return te, json.Unmarshal(data, &te)
 }
 
+// UpdateTimeEntry updates a time entry (e.g. description).
+func (c *Client) UpdateTimeEntry(workspaceID, entryID int, req UpdateTimeEntryRequest) (TimeEntry, error) {
+	req.WorkspaceID = workspaceID
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		return TimeEntry{}, fmt.Errorf("marshal request: %w", err)
+	}
+
+	path := fmt.Sprintf("/workspaces/%d/time_entries/%d", workspaceID, entryID)
+	data, err := c.do("PUT", path, string(body))
+	if err != nil {
+		return TimeEntry{}, err
+	}
+	var te TimeEntry
+	return te, json.Unmarshal(data, &te)
+}
+
 // StopTimer stops the running time entry.
 func (c *Client) StopTimer(workspaceID, entryID int) (TimeEntry, error) {
 	path := fmt.Sprintf("/workspaces/%d/time_entries/%d/stop", workspaceID, entryID)

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/gd/toggl-tui/internal/api"
 	"github.com/gd/toggl-tui/internal/ui/common"
@@ -19,6 +20,8 @@ type Model struct {
 	currentTimer *api.TimeEntry
 	cursor       int
 	showHelp     bool
+	editing      bool
+	editInput    textinput.Model
 	width        int
 	height       int
 }
@@ -51,6 +54,23 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.height = msg.Height
 
 	case tea.KeyMsg:
+		if m.editing {
+			switch msg.String() {
+			case "enter":
+				if m.cursor >= 0 && m.cursor < len(m.entries) {
+					m.editing = false
+					return m, m.updateEntry(m.entries[m.cursor].ID, m.editInput.Value())
+				}
+				m.editing = false
+			case "esc":
+				m.editing = false
+			default:
+				var cmd tea.Cmd
+				m.editInput, cmd = m.editInput.Update(msg)
+				return m, cmd
+			}
+			return m, nil
+		}
 		switch msg.String() {
 		case "s":
 			return m, func() tea.Msg { return common.SwitchScreenMsg{Screen: common.ScreenStartTimer} }
@@ -61,6 +81,16 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case "x":
 			if m.currentTimer != nil {
 				return m, m.stopTimer()
+			}
+		case "e":
+			if m.cursor >= 0 && m.cursor < len(m.entries) {
+				m.editing = true
+				ti := textinput.New()
+				ti.SetValue(m.entries[m.cursor].Description)
+				ti.Focus()
+				ti.Width = 40
+				m.editInput = ti
+				return m, textinput.Blink
 			}
 		case "j", "down":
 			if m.cursor < len(m.entries)-1 {
@@ -93,7 +123,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.currentTimer = nil
 		return m, tea.Batch(m.fetchEntries(), m.fetchCurrentTimer())
 
-	case common.TimerStartedMsg, common.EntryCreatedMsg:
+	case common.TimerStartedMsg, common.EntryCreatedMsg, common.EntryUpdatedMsg:
 		return m, tea.Batch(m.fetchEntries(), m.fetchCurrentTimer())
 
 	case common.TickMsg:
@@ -152,6 +182,19 @@ func (m Model) stopTimer() tea.Cmd {
 	}
 }
 
+func (m Model) updateEntry(entryID int, description string) tea.Cmd {
+	return func() tea.Msg {
+		req := api.UpdateTimeEntryRequest{
+			Description: strings.TrimSpace(description),
+		}
+		entry, err := m.client.UpdateTimeEntry(m.workspaceID, entryID, req)
+		if err != nil {
+			return common.ErrMsg{Err: fmt.Errorf("update entry: %w", err)}
+		}
+		return common.EntryUpdatedMsg{Entry: entry}
+	}
+}
+
 func (m Model) tickCmd() tea.Cmd {
 	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
 		return common.TickMsg{}
@@ -167,6 +210,11 @@ func (m Model) autoRefreshCmd() tea.Cmd {
 // Projects returns the project map for use by other screens.
 func (m Model) Projects() map[int]api.Project {
 	return m.projects
+}
+
+// HasRunningTimer returns whether a timer is currently running.
+func (m Model) HasRunningTimer() bool {
+	return m.currentTimer != nil
 }
 
 // Client returns the API client.
@@ -205,7 +253,7 @@ func (m Model) View() string {
 		b.WriteString(m.renderHelp())
 	} else {
 		b.WriteString("\n\n")
-		b.WriteString(common.HelpStyle.Render("? help • s start • m manual • x stop • r refresh • q quit"))
+		b.WriteString(common.HelpStyle.Render("? help • s start • m manual • x stop • e edit • r refresh • q quit"))
 	}
 
 	return b.String()
@@ -256,6 +304,14 @@ func (m Model) renderEntries() string {
 	b.WriteString("\n")
 
 	for i, e := range m.entries {
+		// Inline edit mode for selected row
+		if m.editing && i == m.cursor {
+			line := fmt.Sprintf("  %s", m.editInput.View())
+			b.WriteString(common.SelectedRowStyle.Render(line))
+			b.WriteString("\n")
+			continue
+		}
+
 		desc := e.Description
 		if desc == "" {
 			desc = "(no description)"
@@ -279,8 +335,7 @@ func (m Model) renderEntries() string {
 			// Running timer — show elapsed
 			startTime, err := time.Parse(time.RFC3339, e.Start)
 			if err == nil {
-				elapsed := time.Since(startTime)
-				dur = formatDurationSecs(int(elapsed.Seconds()))
+				dur = formatDuration(int(time.Since(startTime).Seconds()))
 			}
 		}
 
@@ -314,9 +369,9 @@ func (m Model) renderTotal() string {
 func (m Model) renderHelp() string {
 	help := `Keyboard Shortcuts:
   s     Start timer         m     Manual entry
-  x     Stop timer          r     Refresh
-  j/k   Navigate            ?     Toggle help
-  q     Quit`
+  x     Stop timer          e     Edit description
+  r     Refresh             ?     Toggle help
+  j/k   Navigate            q     Quit`
 	return common.HelpStyle.Render(help)
 }
 
@@ -324,12 +379,6 @@ func formatDuration(seconds int) string {
 	if seconds < 0 {
 		return "running"
 	}
-	h := seconds / 3600
-	m := (seconds % 3600) / 60
-	return fmt.Sprintf("%d:%02d", h, m)
-}
-
-func formatDurationSecs(seconds int) string {
 	h := seconds / 3600
 	m := (seconds % 3600) / 60
 	s := seconds % 60

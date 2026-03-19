@@ -42,3 +42,9 @@ type CreateTimeEntryRequest struct {
 	ProjectID   *int   `json:"project_id,omitempty"`
 	Stop        string `json:"stop,omitempty"`
 }
+
+// UpdateTimeEntryRequest is the payload for updating a time entry.
+type UpdateTimeEntryRequest struct {
+	Description string `json:"description"`
+	WorkspaceID int    `json:"workspace_id"`
+}

@@ -42,6 +42,9 @@ type TimerStoppedMsg struct{ Entry api.TimeEntry }
 // EntryCreatedMsg indicates a manual entry was created.
 type EntryCreatedMsg struct{ Entry api.TimeEntry }
 
+// EntryUpdatedMsg indicates an entry was updated.
+type EntryUpdatedMsg struct{ Entry api.TimeEntry }
+
 // ConfigSavedMsg indicates config was saved successfully.
 type ConfigSavedMsg struct{}
 

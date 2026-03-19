@@ -128,6 +128,30 @@ func TestStopTimer(t *testing.T) {
 	}
 }
 
+func TestUpdateTimeEntry(t *testing.T) {
+	want := TimeEntry{ID: 42, Description: "updated desc"}
+	c, srv := testServer(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "PUT" {
+			t.Errorf("expected PUT, got %s", r.Method)
+		}
+		var req UpdateTimeEntryRequest
+		json.NewDecoder(r.Body).Decode(&req)
+		if req.Description != "updated desc" {
+			t.Errorf("expected description 'updated desc', got %s", req.Description)
+		}
+		json.NewEncoder(w).Encode(want)
+	})
+	defer srv.Close()
+
+	got, err := c.UpdateTimeEntry(100, 42, UpdateTimeEntryRequest{Description: "updated desc"})
+	if err != nil {
+		t.Fatalf("UpdateTimeEntry: %v", err)
+	}
+	if got.Description != "updated desc" {
+		t.Errorf("got description %q, want 'updated desc'", got.Description)
+	}
+}
+
 func TestRateLimitError(t *testing.T) {
 	c, srv := testServer(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(429)

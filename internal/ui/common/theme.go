@@ -25,6 +25,10 @@ var (
 			Background(ColorError).
 			Padding(0, 1)
 
+	WarningStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#FFA500")).
+			Bold(true)
+
 	TimerRunningStyle = lipgloss.NewStyle().
 				Bold(true).
 				Foreground(ColorRunning)

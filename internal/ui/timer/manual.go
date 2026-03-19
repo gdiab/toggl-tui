@@ -12,6 +12,8 @@ import (
 	"github.com/gd/toggl-tui/internal/ui/common"
 )
 
+const minFormHeight = 20
+
 // ManualModel is the manual entry form.
 type ManualModel struct {
 	client        *api.Client
@@ -23,6 +25,7 @@ type ManualModel struct {
 	projectIdx    int
 	focusIdx      int // 0=desc, 1=start, 2=duration, 3=project, 4=submit
 	err           string
+	height        int
 }
 
 // NewManual creates a new manual entry form.
@@ -59,6 +62,9 @@ func (m ManualModel) Init() tea.Cmd {
 // Update handles messages.
 func (m ManualModel) Update(msg tea.Msg) (ManualModel, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.height = msg.Height
+		return m, nil
 	case tea.KeyMsg:
 		m.err = ""
 		switch msg.String() {
@@ -183,6 +189,10 @@ func (m ManualModel) submit() tea.Cmd {
 
 // View renders the manual entry form.
 func (m ManualModel) View() string {
+	if m.height > 0 && m.height < minFormHeight {
+		return common.ErrorStyle.Render(fmt.Sprintf("Terminal too short (%d rows). Need at least %d rows — please resize.", m.height, minFormHeight))
+	}
+
 	var b strings.Builder
 
 	b.WriteString(common.TitleStyle.Render("Manual Time Entry"))
