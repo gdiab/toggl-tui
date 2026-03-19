@@ -146,7 +146,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				ti.Placeholder = "What did you work on?"
 				ti.SetValue(m.entries[m.cursor].Description)
 				ti.Focus()
-				ti.Width = 40 // will be resized dynamically in renderWithModal
+				// Set width based on current terminal size
+			// Modal: width*3/5 (capped 40-120), content: modal-6, input: content-2
+			mw := m.width * 3 / 5
+			if mw < 40 { mw = 40 }
+			if mw > 120 { mw = 120 }
+			ti.Width = mw - 6 - 2
 				m.editInput = ti
 				// Set project picker to current entry's project
 				m.editProjIdx = -1
@@ -465,15 +470,13 @@ func (m Model) renderWithModal(dashView string) string {
 	if modalWidth > 120 {
 		modalWidth = 120
 	}
-	innerWidth := modalWidth - 4 // account for border + padding
+	// lipgloss Width = content width; border adds 2, padding(1,2) adds 4
+	contentWidth := modalWidth - 6
 
-	// Dynamically size the text input if not yet sized for this modal width
-	desiredWidth := innerWidth - 8 // form field border(4) + padding(2) + prompt(2)
-	if desiredWidth < 20 {
-		desiredWidth = 20
-	}
-	if m.editInput.Width != desiredWidth {
-		m.editInput.Width = desiredWidth
+	// Text input gets full content width minus prompt "> " (2 chars)
+	m.editInput.Width = contentWidth - 2
+	if m.editInput.Width < 20 {
+		m.editInput.Width = 20
 	}
 
 	// Build modal content
@@ -482,16 +485,10 @@ func (m Model) renderWithModal(dashView string) string {
 	mb.WriteString(common.TitleStyle.Render("Edit Time Entry"))
 	mb.WriteString("\n\n")
 
-	// Description field
-	// Width for the form field border: innerWidth minus form field border (4) and padding (2)
-	fieldWidth := innerWidth - 6
+	// Description field — no nested border, just the text input directly
 	mb.WriteString(common.FormLabelStyle.Render("Description"))
 	mb.WriteString("\n")
-	if m.editFocus == 0 {
-		mb.WriteString(common.FormFieldFocusedStyle.Width(fieldWidth).Render(m.editInput.View()))
-	} else {
-		mb.WriteString(common.FormFieldStyle.Width(fieldWidth).Render(m.editInput.View()))
-	}
+	mb.WriteString(m.editInput.View())
 	mb.WriteString("\n\n")
 
 	// Project picker
@@ -532,7 +529,7 @@ func (m Model) renderWithModal(dashView string) string {
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(common.ColorPrimary).
 		Padding(1, 2).
-		Width(innerWidth)
+		Width(contentWidth)
 
 	modal := modalStyle.Render(modalContent)
 
