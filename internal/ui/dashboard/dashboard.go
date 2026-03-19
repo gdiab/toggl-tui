@@ -24,8 +24,8 @@ type Model struct {
 	showHelp     bool
 	editing      bool
 	editInput    textinput.Model
-	editFocus    int  // 0=description, 1=project
-	editProjIdx  int  // index into projectList, -1 = no project
+	editFocus    int // 0=description, 1=project
+	editProjIdx  int // index into projectList, -1 = no project
 	updateNotice string
 	width        int
 	height       int

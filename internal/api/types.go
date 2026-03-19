@@ -23,13 +23,13 @@ type Project struct {
 
 // TimeEntry represents a Toggl time entry.
 type TimeEntry struct {
-	ID          int    `json:"id"`
-	WorkspaceID int    `json:"workspace_id"`
-	Description string `json:"description"`
-	Start       string `json:"start"`
+	ID          int     `json:"id"`
+	WorkspaceID int     `json:"workspace_id"`
+	Description string  `json:"description"`
+	Start       string  `json:"start"`
 	Stop        *string `json:"stop"`
-	Duration    int    `json:"duration"`
-	ProjectID   *int   `json:"project_id"`
+	Duration    int     `json:"duration"`
+	ProjectID   *int    `json:"project_id"`
 }
 
 // CreateTimeEntryRequest is the payload for creating a time entry.
