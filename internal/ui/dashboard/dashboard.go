@@ -366,33 +366,9 @@ func (m Model) renderEntries() string {
 	b.WriteString("\n")
 
 	for i, e := range m.entries {
-		// Inline edit mode for selected row
-		if m.editing && i == m.cursor {
-			descLine := fmt.Sprintf("  %s", m.editInput.View())
-			b.WriteString(common.SelectedRowStyle.Render(descLine))
-			b.WriteString("\n")
-			// Project carousel
-			projName := "(none)"
-			if m.editProjIdx >= 0 && m.editProjIdx < len(m.projectList) {
-				projName = m.projectList[m.editProjIdx].Name
-			}
-			if m.editFocus == 1 {
-				b.WriteString(common.SelectedRowStyle.Render(
-					fmt.Sprintf("  %s", common.FormFieldFocusedStyle.Render(fmt.Sprintf("< %s >", projName))),
-				))
-			} else {
-				b.WriteString(common.MutedStyle.Render(fmt.Sprintf("    %s", projName)))
-			}
-			b.WriteString("\n")
-			continue
-		}
-
 		desc := e.Description
 		if desc == "" {
 			desc = "(no description)"
-		}
-		if len(desc) > 28 {
-			desc = desc[:28] + ".."
 		}
 
 		project := ""
@@ -400,9 +376,6 @@ func (m Model) renderEntries() string {
 			if p, ok := m.projects[*e.ProjectID]; ok {
 				project = p.Name
 			}
-		}
-		if len(project) > 13 {
-			project = project[:13] + ".."
 		}
 
 		dur := formatDuration(e.Duration)
@@ -412,6 +385,41 @@ func (m Model) renderEntries() string {
 			if err == nil {
 				dur = formatDuration(int(time.Since(startTime).Seconds()))
 			}
+		}
+
+		// Inline edit mode for selected row
+		if m.editing && i == m.cursor {
+			// Description column: show text input, truncated to column width
+			descView := m.editInput.View()
+			// Project column: show carousel inline
+			projName := "(none)"
+			if m.editProjIdx >= 0 && m.editProjIdx < len(m.projectList) {
+				projName = m.projectList[m.editProjIdx].Name
+			}
+			var projCol string
+			if m.editFocus == 1 {
+				carousel := fmt.Sprintf("< %s >", projName)
+				if len(carousel) > 15 {
+					carousel = carousel[:13] + ".."
+				}
+				projCol = common.FormFieldFocusedStyle.Render(carousel)
+			} else {
+				if len(projName) > 13 {
+					projName = projName[:13] + ".."
+				}
+				projCol = common.MutedStyle.Render(fmt.Sprintf("%-15s", projName))
+			}
+			line := fmt.Sprintf("  %-30s %s %10s", descView, projCol, dur)
+			b.WriteString(common.SelectedRowStyle.Render(line))
+			b.WriteString("\n")
+			continue
+		}
+
+		if len(desc) > 28 {
+			desc = desc[:28] + ".."
+		}
+		if len(project) > 13 {
+			project = project[:13] + ".."
 		}
 
 		line := fmt.Sprintf("  %-30s %-15s %10s", desc, project, dur)
