@@ -15,6 +15,7 @@ import (
 type Model struct {
 	client       *api.Client
 	workspaceID  int
+	version      string
 	entries      []api.TimeEntry
 	projects     map[int]api.Project
 	projectList  []api.Project // ordered slice for carousel
@@ -25,17 +26,24 @@ type Model struct {
 	editInput    textinput.Model
 	editFocus    int  // 0=description, 1=project
 	editProjIdx  int  // index into projectList, -1 = no project
+	updateNotice string
 	width        int
 	height       int
 }
 
 // New creates a new dashboard model.
-func New(client *api.Client, workspaceID int) Model {
+func New(client *api.Client, workspaceID int, version string) Model {
 	return Model{
 		client:      client,
 		workspaceID: workspaceID,
+		version:     version,
 		projects:    make(map[int]api.Project),
 	}
+}
+
+// SetUpdateNotice sets the update notice to display.
+func (m *Model) SetUpdateNotice(notice string) {
+	m.updateNotice = notice
 }
 
 // Init fetches initial data.
@@ -279,7 +287,11 @@ func (m Model) WorkspaceID() int {
 func (m Model) View() string {
 	var b strings.Builder
 
-	b.WriteString(common.TitleStyle.Render("Toggl TUI"))
+	title := "Toggl TUI"
+	if m.version != "" && m.version != "dev" {
+		title += " " + m.version
+	}
+	b.WriteString(common.TitleStyle.Render(title))
 	b.WriteString("\n")
 
 	// Timer status bar
@@ -294,6 +306,12 @@ func (m Model) View() string {
 	// Total time
 	b.WriteString("\n")
 	b.WriteString(m.renderTotal())
+
+	// Update notice
+	if m.updateNotice != "" {
+		b.WriteString("\n\n")
+		b.WriteString(common.UpdateStyle.Render(m.updateNotice))
+	}
 
 	// Help
 	if m.showHelp {

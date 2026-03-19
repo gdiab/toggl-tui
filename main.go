@@ -9,6 +9,9 @@ import (
 	"github.com/gdiab/toggl-tui/internal/ui"
 )
 
+// Set via ldflags: -X main.version=v0.1.1
+var version = "dev"
+
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
@@ -16,7 +19,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	app := ui.NewApp(cfg)
+	app := ui.NewApp(cfg, version)
 
 	p := tea.NewProgram(app, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {

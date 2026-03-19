@@ -56,3 +56,6 @@ type TickMsg struct{}
 
 // RefreshMsg triggers a data refresh.
 type RefreshMsg struct{}
+
+// UpdateAvailableMsg carries an update notice (empty if up to date).
+type UpdateAvailableMsg struct{ Notice string }

@@ -67,4 +67,8 @@ var (
 	StatusBarStyle = lipgloss.NewStyle().
 			Padding(0, 1).
 			MarginBottom(1)
+
+	UpdateStyle = lipgloss.NewStyle().
+			Foreground(ColorSecondary).
+			Italic(true)
 )

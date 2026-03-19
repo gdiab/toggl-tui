@@ -10,25 +10,28 @@ import (
 	"github.com/gdiab/toggl-tui/internal/ui/dashboard"
 	"github.com/gdiab/toggl-tui/internal/ui/setup"
 	"github.com/gdiab/toggl-tui/internal/ui/timer"
+	"github.com/gdiab/toggl-tui/internal/update"
 )
 
 // App is the root model that routes between screens.
 type App struct {
-	screen    common.Screen
-	setup     setup.Model
-	dashboard dashboard.Model
-	startForm timer.StartModel
+	screen     common.Screen
+	setup      setup.Model
+	dashboard  dashboard.Model
+	startForm  timer.StartModel
 	manualForm timer.ManualModel
-	cfg       *config.Config
-	client    *api.Client
-	errMsg    string
-	width     int
-	height    int
+	cfg        *config.Config
+	client     *api.Client
+	version    string
+	errMsg     string
+	updateNote string
+	width      int
+	height     int
 }
 
 // NewApp creates a new root app model.
-func NewApp(cfg *config.Config) App {
-	app := App{}
+func NewApp(cfg *config.Config, version string) App {
+	app := App{version: version}
 	if cfg == nil {
 		app.screen = common.ScreenSetup
 		app.setup = setup.New()
@@ -36,20 +39,29 @@ func NewApp(cfg *config.Config) App {
 		app.cfg = cfg
 		app.client = api.NewClient(cfg.APIToken)
 		app.screen = common.ScreenDashboard
-		app.dashboard = dashboard.New(app.client, cfg.WorkspaceID)
+		app.dashboard = dashboard.New(app.client, cfg.WorkspaceID, version)
 	}
 	return app
 }
 
 // Init starts the app.
 func (a App) Init() tea.Cmd {
+	cmds := []tea.Cmd{a.checkForUpdate()}
 	switch a.screen {
 	case common.ScreenSetup:
-		return a.setup.Init()
+		cmds = append(cmds, a.setup.Init())
 	case common.ScreenDashboard:
-		return a.dashboard.Init()
+		cmds = append(cmds, a.dashboard.Init())
 	}
-	return nil
+	return tea.Batch(cmds...)
+}
+
+func (a App) checkForUpdate() tea.Cmd {
+	return func() tea.Msg {
+		latest := update.CheckLatest()
+		notice := update.FormatNotice(a.version, latest)
+		return common.UpdateAvailableMsg{Notice: notice}
+	}
 }
 
 // Update handles messages.
@@ -80,6 +92,11 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.errMsg = ""
 		return a, nil
 
+	case common.UpdateAvailableMsg:
+		a.updateNote = msg.Notice
+		a.dashboard.SetUpdateNotice(msg.Notice)
+		return a, nil
+
 	case common.TimerStartedMsg:
 		a.screen = common.ScreenDashboard
 		var m dashboard.Model
@@ -100,7 +117,6 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch a.screen {
 	case common.ScreenSetup:
 		a.setup, cmd = a.setup.Update(msg)
-		// After setup saves config, we need to init dashboard
 		if sw, ok := msg.(common.ConfigSavedMsg); ok {
 			_ = sw
 			cfg, _ := config.Load()
@@ -134,7 +150,8 @@ func (a App) switchScreen(screen common.Screen) (App, tea.Cmd) {
 			a.cfg = cfg
 			a.client = api.NewClient(cfg.APIToken)
 		}
-		a.dashboard = dashboard.New(a.client, a.cfg.WorkspaceID)
+		a.dashboard = dashboard.New(a.client, a.cfg.WorkspaceID, a.version)
+		a.dashboard.SetUpdateNotice(a.updateNote)
 		return a, a.dashboard.Init()
 	case common.ScreenStartTimer:
 		projects := projectSlice(a.dashboard.Projects())
