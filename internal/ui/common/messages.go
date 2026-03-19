@@ -10,6 +10,7 @@ const (
 	ScreenDashboard
 	ScreenStartTimer
 	ScreenManualEntry
+	ScreenWeekView
 )
 
 // SwitchScreenMsg requests a screen transition.
@@ -59,3 +60,6 @@ type RefreshMsg struct{}
 
 // UpdateAvailableMsg carries an update notice (empty if up to date).
 type UpdateAvailableMsg struct{ Notice string }
+
+// WeekFetchedMsg carries the weekly summary data.
+type WeekFetchedMsg struct{ Summary api.WeekSummary }
