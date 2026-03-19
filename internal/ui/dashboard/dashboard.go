@@ -17,11 +17,14 @@ type Model struct {
 	workspaceID  int
 	entries      []api.TimeEntry
 	projects     map[int]api.Project
+	projectList  []api.Project // ordered slice for carousel
 	currentTimer *api.TimeEntry
 	cursor       int
 	showHelp     bool
 	editing      bool
 	editInput    textinput.Model
+	editFocus    int  // 0=description, 1=project
+	editProjIdx  int  // index into projectList, -1 = no project
 	width        int
 	height       int
 }
@@ -59,15 +62,44 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			case "enter":
 				if m.cursor >= 0 && m.cursor < len(m.entries) {
 					m.editing = false
-					return m, m.updateEntry(m.entries[m.cursor].ID, m.editInput.Value())
+					var projID *int
+					if m.editProjIdx >= 0 && m.editProjIdx < len(m.projectList) {
+						id := m.projectList[m.editProjIdx].ID
+						projID = &id
+					}
+					return m, m.updateEntry(m.entries[m.cursor].ID, m.editInput.Value(), projID)
 				}
 				m.editing = false
 			case "esc":
 				m.editing = false
+			case "tab":
+				m.editFocus = (m.editFocus + 1) % 2
+				if m.editFocus == 0 {
+					m.editInput.Focus()
+				} else {
+					m.editInput.Blur()
+				}
+			case "shift+tab":
+				m.editFocus = (m.editFocus + 1) % 2
+				if m.editFocus == 0 {
+					m.editInput.Focus()
+				} else {
+					m.editInput.Blur()
+				}
+			case "left", "h":
+				if m.editFocus == 1 && m.editProjIdx > -1 {
+					m.editProjIdx--
+				}
+			case "right", "l":
+				if m.editFocus == 1 && m.editProjIdx < len(m.projectList)-1 {
+					m.editProjIdx++
+				}
 			default:
-				var cmd tea.Cmd
-				m.editInput, cmd = m.editInput.Update(msg)
-				return m, cmd
+				if m.editFocus == 0 {
+					var cmd tea.Cmd
+					m.editInput, cmd = m.editInput.Update(msg)
+					return m, cmd
+				}
 			}
 			return m, nil
 		}
@@ -85,11 +117,22 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case "e":
 			if m.cursor >= 0 && m.cursor < len(m.entries) {
 				m.editing = true
+				m.editFocus = 0
 				ti := textinput.New()
 				ti.SetValue(m.entries[m.cursor].Description)
 				ti.Focus()
 				ti.Width = 40
 				m.editInput = ti
+				// Set project picker to current entry's project
+				m.editProjIdx = -1
+				if m.entries[m.cursor].ProjectID != nil {
+					for i, p := range m.projectList {
+						if p.ID == *m.entries[m.cursor].ProjectID {
+							m.editProjIdx = i
+							break
+						}
+					}
+				}
 				return m, textinput.Blink
 			}
 		case "j", "down":
@@ -115,8 +158,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	case common.ProjectsFetchedMsg:
 		m.projects = make(map[int]api.Project)
+		m.projectList = nil
 		for _, p := range msg.Projects {
 			m.projects[p.ID] = p
+			if p.Active {
+				m.projectList = append(m.projectList, p)
+			}
 		}
 
 	case common.TimerStoppedMsg:
@@ -182,10 +229,11 @@ func (m Model) stopTimer() tea.Cmd {
 	}
 }
 
-func (m Model) updateEntry(entryID int, description string) tea.Cmd {
+func (m Model) updateEntry(entryID int, description string, projectID *int) tea.Cmd {
 	return func() tea.Msg {
 		req := api.UpdateTimeEntryRequest{
 			Description: strings.TrimSpace(description),
+			ProjectID:   projectID,
 		}
 		entry, err := m.client.UpdateTimeEntry(m.workspaceID, entryID, req)
 		if err != nil {
@@ -306,8 +354,21 @@ func (m Model) renderEntries() string {
 	for i, e := range m.entries {
 		// Inline edit mode for selected row
 		if m.editing && i == m.cursor {
-			line := fmt.Sprintf("  %s", m.editInput.View())
-			b.WriteString(common.SelectedRowStyle.Render(line))
+			descLine := fmt.Sprintf("  %s", m.editInput.View())
+			b.WriteString(common.SelectedRowStyle.Render(descLine))
+			b.WriteString("\n")
+			// Project carousel
+			projName := "(none)"
+			if m.editProjIdx >= 0 && m.editProjIdx < len(m.projectList) {
+				projName = m.projectList[m.editProjIdx].Name
+			}
+			if m.editFocus == 1 {
+				b.WriteString(common.SelectedRowStyle.Render(
+					fmt.Sprintf("  %s", common.FormFieldFocusedStyle.Render(fmt.Sprintf("< %s >", projName))),
+				))
+			} else {
+				b.WriteString(common.MutedStyle.Render(fmt.Sprintf("    %s", projName)))
+			}
 			b.WriteString("\n")
 			continue
 		}
@@ -369,9 +430,10 @@ func (m Model) renderTotal() string {
 func (m Model) renderHelp() string {
 	help := `Keyboard Shortcuts:
   s     Start timer         m     Manual entry
-  x     Stop timer          e     Edit description
+  x     Stop timer          e     Edit entry (desc + project)
   r     Refresh             ?     Toggle help
-  j/k   Navigate            q     Quit`
+  j/k   Navigate            q     Quit
+  Edit mode: tab switch field, h/l change project, enter save, esc cancel`
 	return common.HelpStyle.Render(help)
 }
 

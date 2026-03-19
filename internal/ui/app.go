@@ -142,7 +142,7 @@ func (a App) switchScreen(screen common.Screen) (App, tea.Cmd) {
 		return a, a.startForm.Init()
 	case common.ScreenManualEntry:
 		projects := projectSlice(a.dashboard.Projects())
-		a.manualForm = timer.NewManual(a.client, a.cfg.WorkspaceID, projects)
+		a.manualForm = timer.NewManual(a.client, a.cfg.WorkspaceID, projects, a.height)
 		return a, a.manualForm.Init()
 	case common.ScreenSetup:
 		a.setup = setup.New()

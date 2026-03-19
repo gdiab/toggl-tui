@@ -47,4 +47,5 @@ type CreateTimeEntryRequest struct {
 type UpdateTimeEntryRequest struct {
 	Description string `json:"description"`
 	WorkspaceID int    `json:"workspace_id"`
+	ProjectID   *int   `json:"project_id"`
 }

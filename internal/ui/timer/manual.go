@@ -29,7 +29,7 @@ type ManualModel struct {
 }
 
 // NewManual creates a new manual entry form.
-func NewManual(client *api.Client, workspaceID int, projects []api.Project) ManualModel {
+func NewManual(client *api.Client, workspaceID int, projects []api.Project, height int) ManualModel {
 	desc := textinput.New()
 	desc.Placeholder = "What did you work on?"
 	desc.Focus()
@@ -51,6 +51,7 @@ func NewManual(client *api.Client, workspaceID int, projects []api.Project) Manu
 		durationInput: dur,
 		projects:      projects,
 		projectIdx:    -1,
+		height:        height,
 	}
 }
 
