@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/gdiab/toggl-tui/internal/api"
 	"github.com/gdiab/toggl-tui/internal/ui/common"
 )
@@ -546,10 +547,10 @@ func (m Model) renderWithModal(dashView string) string {
 		}
 	}
 
-	// Dim the dashboard lines and overlay the modal
+	// Dim the dashboard lines by stripping existing colors and applying a muted foreground
 	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#444444"))
 	for i := range result {
-		result[i] = dimStyle.Render(result[i])
+		result[i] = dimStyle.Render(ansi.Strip(result[i]))
 	}
 
 	for i, mLine := range modalLines {
