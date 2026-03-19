@@ -7,6 +7,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/gdiab/toggl-tui/internal/api"
 	"github.com/gdiab/toggl-tui/internal/ui/common"
 )
@@ -127,9 +128,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.editing = true
 				m.editFocus = 0
 				ti := textinput.New()
+				ti.Placeholder = "What did you work on?"
 				ti.SetValue(m.entries[m.cursor].Description)
 				ti.Focus()
-				ti.Width = 40
+				ti.Width = 60
 				m.editInput = ti
 				// Set project picker to current entry's project
 				m.editProjIdx = -1
@@ -318,7 +320,14 @@ func (m Model) View() string {
 		b.WriteString(common.HelpStyle.Render("? help • s start • m manual • w week • x stop • e edit • r refresh • q quit"))
 	}
 
-	return b.String()
+	dashView := b.String()
+
+	// Overlay the edit modal if editing
+	if m.editing {
+		return m.renderWithModal(dashView)
+	}
+
+	return dashView
 }
 
 func (m Model) renderTimerBar() string {
@@ -387,34 +396,6 @@ func (m Model) renderEntries() string {
 			}
 		}
 
-		// Inline edit mode for selected row
-		if m.editing && i == m.cursor {
-			// Description column: show text input, truncated to column width
-			descView := m.editInput.View()
-			// Project column: show carousel inline
-			projName := "(none)"
-			if m.editProjIdx >= 0 && m.editProjIdx < len(m.projectList) {
-				projName = m.projectList[m.editProjIdx].Name
-			}
-			var projCol string
-			if m.editFocus == 1 {
-				carousel := fmt.Sprintf("< %s >", projName)
-				if len(carousel) > 15 {
-					carousel = carousel[:13] + ".."
-				}
-				projCol = common.FormFieldFocusedStyle.Render(carousel)
-			} else {
-				if len(projName) > 13 {
-					projName = projName[:13] + ".."
-				}
-				projCol = common.MutedStyle.Render(fmt.Sprintf("%-15s", projName))
-			}
-			line := fmt.Sprintf("  %-30s %s %10s", descView, projCol, dur)
-			b.WriteString(common.SelectedRowStyle.Render(line))
-			b.WriteString("\n")
-			continue
-		}
-
 		if len(desc) > 28 {
 			desc = desc[:28] + ".."
 		}
@@ -458,6 +439,120 @@ func (m Model) renderHelp() string {
   q     Quit
   Edit mode: tab switch field, h/l change project, enter save, esc cancel`
 	return common.HelpStyle.Render(help)
+}
+
+func (m Model) renderWithModal(dashView string) string {
+	// Determine modal dimensions
+	modalWidth := m.width * 3 / 5
+	if modalWidth < 40 {
+		modalWidth = 40
+	}
+	if modalWidth > 80 {
+		modalWidth = 80
+	}
+	innerWidth := modalWidth - 4 // account for border + padding
+
+	// Build modal content
+	var mb strings.Builder
+
+	mb.WriteString(common.TitleStyle.Render("Edit Time Entry"))
+	mb.WriteString("\n\n")
+
+	// Description field
+	mb.WriteString(common.FormLabelStyle.Render("Description"))
+	mb.WriteString("\n")
+	if m.editFocus == 0 {
+		mb.WriteString(common.FormFieldFocusedStyle.Render(m.editInput.View()))
+	} else {
+		mb.WriteString(common.FormFieldStyle.Render(m.editInput.View()))
+	}
+	mb.WriteString("\n\n")
+
+	// Project picker
+	mb.WriteString(common.FormLabelStyle.Render("Project"))
+	mb.WriteString("\n")
+	projName := "(none)"
+	if m.editProjIdx >= 0 && m.editProjIdx < len(m.projectList) {
+		projName = m.projectList[m.editProjIdx].Name
+	}
+	if m.editFocus == 1 {
+		mb.WriteString(common.FormFieldFocusedStyle.Render(fmt.Sprintf("< %s >", projName)))
+	} else {
+		mb.WriteString(common.FormFieldStyle.Render(projName))
+	}
+	mb.WriteString("\n\n")
+
+	// Duration (read-only)
+	if m.cursor >= 0 && m.cursor < len(m.entries) {
+		dur := formatDuration(m.entries[m.cursor].Duration)
+		if m.entries[m.cursor].Duration < 0 {
+			startTime, err := time.Parse(time.RFC3339, m.entries[m.cursor].Start)
+			if err == nil {
+				dur = formatDuration(int(time.Since(startTime).Seconds()))
+			}
+		}
+		mb.WriteString(common.FormLabelStyle.Render("Duration"))
+		mb.WriteString("\n")
+		mb.WriteString(common.MutedStyle.Render(dur))
+		mb.WriteString("\n\n")
+	}
+
+	mb.WriteString(common.HelpStyle.Render("tab: switch field • h/l: change project • enter: save • esc: cancel"))
+
+	modalContent := mb.String()
+
+	// Style the modal box
+	modalStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(common.ColorPrimary).
+		Padding(1, 2).
+		Width(innerWidth)
+
+	modal := modalStyle.Render(modalContent)
+
+	// Center the modal over the dashboard
+	dashLines := strings.Split(dashView, "\n")
+	modalLines := strings.Split(modal, "\n")
+
+	// Vertical centering
+	totalHeight := m.height
+	if totalHeight < len(dashLines) {
+		totalHeight = len(dashLines)
+	}
+	modalStartY := (totalHeight - len(modalLines)) / 2
+	if modalStartY < 0 {
+		modalStartY = 0
+	}
+
+	// Horizontal centering
+	modalStartX := (m.width - lipgloss.Width(modal)) / 2
+	if modalStartX < 0 {
+		modalStartX = 0
+	}
+
+	// Overlay modal on dashboard
+	result := make([]string, totalHeight)
+	for i := range result {
+		if i < len(dashLines) {
+			result[i] = dashLines[i]
+		}
+	}
+
+	// Dim the dashboard lines and overlay the modal
+	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#444444"))
+	for i := range result {
+		result[i] = dimStyle.Render(result[i])
+	}
+
+	for i, mLine := range modalLines {
+		row := modalStartY + i
+		if row >= 0 && row < len(result) {
+			padding := strings.Repeat(" ", modalStartX)
+			result[row] = padding + mLine
+		}
+	}
+
+	return strings.Join(result, "\n")
 }
 
 func formatDuration(seconds int) string {
