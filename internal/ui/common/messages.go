@@ -11,6 +11,7 @@ const (
 	ScreenStartTimer
 	ScreenManualEntry
 	ScreenWeekView
+	ScreenDayDetail
 )
 
 // SwitchScreenMsg requests a screen transition.
@@ -63,3 +64,9 @@ type UpdateAvailableMsg struct{ Notice string }
 
 // WeekFetchedMsg carries the weekly summary data.
 type WeekFetchedMsg struct{ Summary api.WeekSummary }
+
+// ShowDayDetailMsg requests navigation to the day detail screen with pre-loaded data.
+type ShowDayDetailMsg struct {
+	Day      api.DaySummary
+	Projects map[int]api.Project
+}
