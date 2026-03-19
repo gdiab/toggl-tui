@@ -15,7 +15,6 @@ import (
 type Model struct {
 	client       *api.Client
 	workspaceID  int
-	version      string
 	entries      []api.TimeEntry
 	projects     map[int]api.Project
 	projectList  []api.Project // ordered slice for carousel
@@ -32,11 +31,10 @@ type Model struct {
 }
 
 // New creates a new dashboard model.
-func New(client *api.Client, workspaceID int, version string) Model {
+func New(client *api.Client, workspaceID int) Model {
 	return Model{
 		client:      client,
 		workspaceID: workspaceID,
-		version:     version,
 		projects:    make(map[int]api.Project),
 	}
 }
@@ -289,11 +287,7 @@ func (m Model) WorkspaceID() int {
 func (m Model) View() string {
 	var b strings.Builder
 
-	title := "Toggl TUI"
-	if m.version != "" && m.version != "dev" {
-		title += " " + m.version
-	}
-	b.WriteString(common.TitleStyle.Render(title))
+	b.WriteString(common.TitleStyle.Render("Toggl TUI"))
 	b.WriteString("\n")
 
 	// Timer status bar

@@ -43,7 +43,7 @@ func NewApp(cfg *config.Config, version string) App {
 		app.cfg = cfg
 		app.client = api.NewClient(cfg.APIToken)
 		app.screen = common.ScreenDashboard
-		app.dashboard = dashboard.New(app.client, cfg.WorkspaceID, version)
+		app.dashboard = dashboard.New(app.client, cfg.WorkspaceID)
 	}
 	return app
 }
@@ -168,7 +168,7 @@ func (a App) switchScreen(screen common.Screen) (App, tea.Cmd) {
 			a.cfg = cfg
 			a.client = api.NewClient(cfg.APIToken)
 		}
-		a.dashboard = dashboard.New(a.client, a.cfg.WorkspaceID, a.version)
+		a.dashboard = dashboard.New(a.client, a.cfg.WorkspaceID)
 		a.dashboard.SetUpdateNotice(a.updateNote)
 		return a, a.dashboard.Init()
 	case common.ScreenStartTimer:
@@ -225,6 +225,10 @@ func (a App) View() string {
 
 	if a.errMsg != "" {
 		view += "\n" + common.ErrorStyle.Render(a.errMsg)
+	}
+
+	if a.version != "" {
+		view += "\n" + common.MutedStyle.Render(a.version)
 	}
 
 	return view
