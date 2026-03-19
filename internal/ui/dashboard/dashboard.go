@@ -116,6 +116,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			return m, func() tea.Msg { return common.SwitchScreenMsg{Screen: common.ScreenStartTimer} }
 		case "m":
 			return m, func() tea.Msg { return common.SwitchScreenMsg{Screen: common.ScreenManualEntry} }
+		case "w":
+			return m, func() tea.Msg { return common.SwitchScreenMsg{Screen: common.ScreenWeekView} }
 		case "r":
 			return m, tea.Batch(m.fetchEntries(), m.fetchCurrentTimer())
 		case "x":
@@ -319,7 +321,7 @@ func (m Model) View() string {
 		b.WriteString(m.renderHelp())
 	} else {
 		b.WriteString("\n\n")
-		b.WriteString(common.HelpStyle.Render("? help • s start • m manual • x stop • e edit • r refresh • q quit"))
+		b.WriteString(common.HelpStyle.Render("? help • s start • m manual • w week • x stop • e edit • r refresh • q quit"))
 	}
 
 	return b.String()
@@ -448,9 +450,10 @@ func (m Model) renderTotal() string {
 func (m Model) renderHelp() string {
 	help := `Keyboard Shortcuts:
   s     Start timer         m     Manual entry
-  x     Stop timer          e     Edit entry (desc + project)
-  r     Refresh             ?     Toggle help
-  j/k   Navigate            q     Quit
+  w     Week view           x     Stop timer
+  e     Edit entry          r     Refresh
+  j/k   Navigate            ?     Toggle help
+  q     Quit
   Edit mode: tab switch field, h/l change project, enter save, esc cancel`
 	return common.HelpStyle.Render(help)
 }

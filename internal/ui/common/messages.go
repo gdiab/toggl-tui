@@ -69,4 +69,10 @@ type WeekFetchedMsg struct{ Summary api.WeekSummary }
 type ShowDayDetailMsg struct {
 	Day      api.DaySummary
 	Projects map[int]api.Project
+	From     Screen // which screen triggered this (for back navigation)
+}
+
+// WeekDaySelectedMsg is emitted by the week view when the user presses enter on a day.
+type WeekDaySelectedMsg struct {
+	Day api.DaySummary
 }

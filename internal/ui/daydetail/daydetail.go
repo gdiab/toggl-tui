@@ -12,18 +12,20 @@ import (
 
 // Model is the read-only day detail screen showing time entries for a single day.
 type Model struct {
-	day      api.DaySummary
-	projects map[int]api.Project
-	cursor   int
-	width    int
-	height   int
+	day          api.DaySummary
+	projects     map[int]api.Project
+	parentScreen common.Screen
+	cursor       int
+	width        int
+	height       int
 }
 
-// New creates a new day detail model.
-func New(day api.DaySummary, projects map[int]api.Project) Model {
+// New creates a new day detail model. parentScreen controls where esc/b navigates back to.
+func New(day api.DaySummary, projects map[int]api.Project, parentScreen common.Screen) Model {
 	return Model{
-		day:      day,
-		projects: projects,
+		day:          day,
+		projects:     projects,
+		parentScreen: parentScreen,
 	}
 }
 
@@ -42,8 +44,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc", "b":
+			back := m.parentScreen
 			return m, func() tea.Msg {
-				return common.SwitchScreenMsg{Screen: common.ScreenDashboard}
+				return common.SwitchScreenMsg{Screen: back}
 			}
 		case "j", "down":
 			if m.cursor < len(m.day.Entries)-1 {

@@ -11,6 +11,7 @@ import (
 	"github.com/gdiab/toggl-tui/internal/ui/daydetail"
 	"github.com/gdiab/toggl-tui/internal/ui/setup"
 	"github.com/gdiab/toggl-tui/internal/ui/timer"
+	"github.com/gdiab/toggl-tui/internal/ui/week"
 	"github.com/gdiab/toggl-tui/internal/update"
 )
 
@@ -21,6 +22,7 @@ type App struct {
 	dashboard  dashboard.Model
 	startForm  timer.StartModel
 	manualForm timer.ManualModel
+	weekView   week.Model
 	dayDetail  daydetail.Model
 	cfg        *config.Config
 	client     *api.Client
@@ -115,7 +117,12 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case common.ShowDayDetailMsg:
 		a.screen = common.ScreenDayDetail
-		a.dayDetail = daydetail.New(msg.Day, msg.Projects)
+		a.dayDetail = daydetail.New(msg.Day, msg.Projects, msg.From)
+		return a, a.dayDetail.Init()
+
+	case common.WeekDaySelectedMsg:
+		a.screen = common.ScreenDayDetail
+		a.dayDetail = daydetail.New(msg.Day, a.dashboard.Projects(), common.ScreenWeekView)
 		return a, a.dayDetail.Init()
 	}
 
@@ -138,6 +145,8 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.startForm, cmd = a.startForm.Update(msg)
 	case common.ScreenManualEntry:
 		a.manualForm, cmd = a.manualForm.Update(msg)
+	case common.ScreenWeekView:
+		a.weekView, cmd = a.weekView.Update(msg)
 	case common.ScreenDayDetail:
 		a.dayDetail, cmd = a.dayDetail.Update(msg)
 	}
@@ -170,6 +179,9 @@ func (a App) switchScreen(screen common.Screen) (App, tea.Cmd) {
 		projects := projectSlice(a.dashboard.Projects())
 		a.manualForm = timer.NewManual(a.client, a.cfg.WorkspaceID, projects, a.height)
 		return a, a.manualForm.Init()
+	case common.ScreenWeekView:
+		a.weekView = week.New(a.client)
+		return a, a.weekView.Init()
 	case common.ScreenSetup:
 		a.setup = setup.New()
 		return a, a.setup.Init()
@@ -205,6 +217,8 @@ func (a App) View() string {
 		view = a.startForm.View()
 	case common.ScreenManualEntry:
 		view = a.manualForm.View()
+	case common.ScreenWeekView:
+		view = a.weekView.View()
 	case common.ScreenDayDetail:
 		view = a.dayDetail.View()
 	}

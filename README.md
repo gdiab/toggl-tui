@@ -1,6 +1,6 @@
 # toggl-tui
 
-A terminal UI for [Toggl Track](https://toggl.com/track/) built with [Bubble Tea](https://github.com/charmbracelet/bubbletea). Start/stop timers, log manual entries, edit entries, and view today's time log — all from your terminal.
+A terminal UI for [Toggl Track](https://toggl.com/track/) built with [Bubble Tea](https://github.com/charmbracelet/bubbletea). Start/stop timers, log manual entries, edit entries, view today's time log, and browse your weekly summary — all from your terminal.
 
 ```
 Toggl TUI
@@ -75,24 +75,30 @@ Config is saved to `~/.config/toggl-tui/config.toml`.
 
 ## Keyboard Shortcuts
 
-| Context   | Key              | Action                       |
-|-----------|-----------------|-------------------------------|
-| Dashboard | `s`             | Start timer                   |
-| Dashboard | `m`             | Manual time entry             |
-| Dashboard | `x`             | Stop running timer            |
-| Dashboard | `e`             | Edit entry (description + project) |
-| Dashboard | `r`             | Refresh entries               |
-| Dashboard | `j`/`k`         | Navigate entries              |
-| Dashboard | `?`             | Toggle help                   |
-| Edit mode | `tab`           | Switch between desc/project   |
-| Edit mode | `h`/`l`         | Change project                |
-| Edit mode | `enter`         | Save changes                  |
-| Edit mode | `esc`           | Cancel                        |
-| Forms     | `tab`/`shift+tab` | Next/prev field             |
-| Forms     | `enter`         | Submit                        |
-| Forms     | `esc`           | Cancel                        |
-| Global    | `q`             | Quit                          |
-| Global    | `ctrl+c`        | Force quit                    |
+| Context     | Key              | Action                       |
+|-------------|-----------------|-------------------------------|
+| Dashboard   | `s`             | Start timer                   |
+| Dashboard   | `m`             | Manual time entry             |
+| Dashboard   | `w`             | Weekly summary view           |
+| Dashboard   | `x`             | Stop running timer            |
+| Dashboard   | `e`             | Edit entry (description + project) |
+| Dashboard   | `r`             | Refresh entries               |
+| Dashboard   | `j`/`k`         | Navigate entries              |
+| Dashboard   | `?`             | Toggle help                   |
+| Week view   | `j`/`k`         | Navigate days                 |
+| Week view   | `enter`         | View day detail               |
+| Week view   | `esc`/`b`       | Back to dashboard             |
+| Day detail  | `j`/`k`         | Navigate entries              |
+| Day detail  | `esc`/`b`       | Back to previous screen       |
+| Edit mode   | `tab`           | Switch between desc/project   |
+| Edit mode   | `h`/`l`         | Change project                |
+| Edit mode   | `enter`         | Save changes                  |
+| Edit mode   | `esc`           | Cancel                        |
+| Forms       | `tab`/`shift+tab` | Next/prev field             |
+| Forms       | `enter`         | Submit                        |
+| Forms       | `esc`           | Cancel                        |
+| Global      | `q`             | Quit                          |
+| Global      | `ctrl+c`        | Force quit                    |
 
 ## Build From Source
 

@@ -41,6 +41,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			if m.cursor > 0 {
 				m.cursor--
 			}
+		case "enter":
+			if m.loaded && m.cursor >= 0 && m.cursor < len(m.summary.Days) {
+				day := m.summary.Days[m.cursor]
+				return m, func() tea.Msg {
+					return common.WeekDaySelectedMsg{Day: day}
+				}
+			}
 		case "esc", "b":
 			return m, func() tea.Msg {
 				return common.SwitchScreenMsg{Screen: common.ScreenDashboard}
@@ -113,7 +120,7 @@ func (m Model) View() string {
 
 	// Help
 	b.WriteString("\n\n")
-	b.WriteString(common.HelpStyle.Render("j/k navigate • esc/b back"))
+	b.WriteString(common.HelpStyle.Render("j/k navigate • enter day detail • esc/b back"))
 
 	return b.String()
 }
