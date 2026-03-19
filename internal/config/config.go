@@ -27,12 +27,17 @@ func Path() (string, error) {
 	return filepath.Join(dir, appDir, configFile), nil
 }
 
-// Load reads the config from disk. Returns nil config (no error) if file doesn't exist.
+// Load reads the config from the default path. Returns nil config (no error) if file doesn't exist.
 func Load() (*Config, error) {
 	path, err := Path()
 	if err != nil {
 		return nil, err
 	}
+	return LoadFrom(path)
+}
+
+// LoadFrom reads the config from the given path. Returns nil config (no error) if file doesn't exist.
+func LoadFrom(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
 		return nil, nil
@@ -47,12 +52,17 @@ func Load() (*Config, error) {
 	return &cfg, nil
 }
 
-// Save writes the config to disk, creating directories as needed.
+// Save writes the config to the default path, creating directories as needed.
 func Save(cfg *Config) error {
 	path, err := Path()
 	if err != nil {
 		return err
 	}
+	return SaveTo(cfg, path)
+}
+
+// SaveTo writes the config to the given path, creating directories as needed.
+func SaveTo(cfg *Config, path string) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return fmt.Errorf("create config dir: %w", err)
 	}

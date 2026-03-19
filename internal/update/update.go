@@ -9,7 +9,9 @@ import (
 	"time"
 )
 
-const releaseURL = "https://api.github.com/repos/gdiab/toggl-tui/releases/latest"
+// ReleaseURL is the GitHub API endpoint for the latest release.
+// Exported so tests can override it with an httptest server.
+var ReleaseURL = "https://api.github.com/repos/gdiab/toggl-tui/releases/latest"
 
 type githubRelease struct {
 	TagName string `json:"tag_name"`
@@ -18,7 +20,7 @@ type githubRelease struct {
 // CheckLatest returns the latest release tag, or empty string on any error.
 func CheckLatest() string {
 	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Get(releaseURL)
+	resp, err := client.Get(ReleaseURL)
 	if err != nil {
 		return ""
 	}
