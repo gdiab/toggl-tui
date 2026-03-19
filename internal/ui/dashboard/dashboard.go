@@ -131,7 +131,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				ti.Placeholder = "What did you work on?"
 				ti.SetValue(m.entries[m.cursor].Description)
 				ti.Focus()
-				ti.Width = 60
+				ti.Width = 40 // will be resized dynamically in renderWithModal
 				m.editInput = ti
 				// Set project picker to current entry's project
 				m.editProjIdx = -1
@@ -447,10 +447,18 @@ func (m Model) renderWithModal(dashView string) string {
 	if modalWidth < 40 {
 		modalWidth = 40
 	}
-	if modalWidth > 80 {
-		modalWidth = 80
+	if modalWidth > 120 {
+		modalWidth = 120
 	}
 	innerWidth := modalWidth - 4 // account for border + padding
+
+	// Dynamically size the text input to fill the modal width
+	// Subtract 4 for the form field border (2) + padding (2)
+	inputWidth := innerWidth - 4
+	if inputWidth < 20 {
+		inputWidth = 20
+	}
+	m.editInput.Width = inputWidth
 
 	// Build modal content
 	var mb strings.Builder
