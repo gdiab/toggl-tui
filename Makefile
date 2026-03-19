@@ -1,10 +1,10 @@
 BINARY := toggl-tui
-VERSION := 0.1.0
+VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 GOBIN ?= $(shell go env GOPATH)/bin
 
 .PHONY: build run clean install uninstall cross test fmt vet
 
-LDFLAGS := -s -w -X main.version=v$(VERSION)
+LDFLAGS := -s -w -X main.version=$(VERSION)
 
 build:
 	go build -ldflags "$(LDFLAGS)" -o $(BINARY) .
