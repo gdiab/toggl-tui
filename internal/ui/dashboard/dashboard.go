@@ -454,8 +454,8 @@ func (m Model) renderWithModal(dashView string) string {
 	innerWidth := modalWidth - 4 // account for border + padding
 
 	// Dynamically size the text input to fill the modal width
-	// Subtract 4 for the form field border (2) + padding (2)
-	inputWidth := innerWidth - 4
+	// Subtract 8: form field border (4) + form field padding (2) + text input prompt (2)
+	inputWidth := innerWidth - 8
 	if inputWidth < 20 {
 		inputWidth = 20
 	}
